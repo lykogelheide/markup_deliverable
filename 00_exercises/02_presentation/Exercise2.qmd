@@ -1,0 +1,148 @@
+---
+title: "Week 2 - Exercise 2"
+author: 
+  - name: Luca Y. Kogelheide
+    orcid: 0009-0000-6724-0779 
+    email: l.y.kogelheide@uu.nl
+date: 13 Jan 2025
+date-format: "D MMM YYYY"
+execute: 
+  echo: true
+editor: source
+format: 
+  revealjs:
+    embed-resources: true #makes this presentation self contained
+    theme: beige
+    progress: true #adds progress bar
+    transition: fade
+    slide-number: true
+    margin: 0.075
+    scrollable: true
+    logo: "logo.png" 
+    toc: false #toc table of content
+    bibliography: bibliography.bib
+---
+# Welcome!
+
+![Utrecht University Logo](logo.png)
+
+Welcome to my advanced Quarto presentation!
+
+## Interactive Table
+```{r}
+library(DT)
+datatable(mtcars, options = list(pagelength = 5, scrollX = TRUE))
+```
+
+## Interactive Figure
+```{r}
+library(ggplot2)
+library(plotly)
+
+p <- ggplot(mpg, aes(displ, hwy, color = class)) +
+  geom_point()
+
+ggplotly(p)
+```
+
+
+## Two-Column Slide
+
+::: {.columns}
+::: {.column width="50%"}
+#### Column 1
+- Point A
+- Point B
+::: 
+
+::: {.column width="50%"}
+#### Column 2
+- Point C
+- Point D
+:::
+:::
+
+
+## Lincoln-Peterson estimator
+
+The Lincoln-Peterson estimator is defined as:
+\begin{aligned}
+\hat{\theta}^{\text{LP}} &= \frac{n_{1}n_{2}}{m}, \\
+\text{where,} \\
+n_{1} &= \sum_{i=1}^{r} \left(w_{i} \sum_{j=1}^{7} \delta_{i,j}^{\text{svy}} \right) = \hat{\theta}^{\text{svy}}, \\
+n_{2} &= \sum_{i=1}^{r} \left(w_{i} \sum_{j=1}^{7} \delta_{i,j}^{\text{sen}} \right), \\
+m &= \sum_{i=1}^{r} \left(w_{i} \sum_{j=1}^{7} \delta_{i,j}^{\text{svy}} \cdot \delta_{i,j}^{\text{sen}} \right).
+\end{aligned}
+
+
+
+
+## Statistical inference as severe testing: How to get beyong the statistics wars
+
+I am currently reading a very interesting book by Deborah [@mayo2018statistical]
+
+
+## displayed, not executed
+
+```{r}
+#| execute:
+#| echo: true
+#| eval: false
+
+summary(mtcars)
+```
+
+## Cached R code
+```{r}
+#| cache: true
+#| code-line-numbers: true
+#| label: figureGeneration
+
+x <- 1:10
+mean(x)
+```
+
+
+## Executed, not displayed
+```{r}
+#| execute:
+#| echo: false
+#| eval: true
+
+ggplot(mtcars, aes(mpg, wt, color = cyl)) +
+  geom_point()
+```
+
+
+## Renv
+```{r}
+library(renv)
+renv::init()
+
+library(tidyverse)
+###this is the code for a Lincoln-Peterson estimator:
+set.seed(1337)
+
+# Set a population size
+popSize = 1000
+
+# simulate a population and three samples
+A = rbinom(popSize,1,prob=0.5)
+B = rbinom(popSize,1,prob=0.4)
+freq = 1
+data = cbind(A,B,freq)
+observed = nrow(data[rowSums(data[,1:2])!=0,])
+m00  = popSize - observed
+m00
+cont_2S = aggregate(freq~A+B,data=data,FUN=sum)
+###LP-estimator for m00
+cont_2S[cont_2S$A==1&cont_2S$B==0,"freq"]*
+cont_2S[cont_2S$A==0&cont_2S$B==1,"freq"]/
+cont_2S[cont_2S$A==1&cont_2S$B==1,"freq"]
+
+sessionInfo()
+```
+
+## References
+
+

@@ -1,0 +1,38 @@
+---
+title: "Week 2 - Exercise 1"
+author: 
+  - name: Luca Y. Kogelheide
+    orcid: 0009-0000-6724-0779 
+    email: l.y.kogelheide@uu.nl
+date: 13 Jan 2025
+date-format: "D MMM YYYY"
+execute: 
+  echo: true
+editor: source
+format: 
+  revealjs:
+    embed-resources: true #makes this presentation self contained
+    theme: league
+    progress: true #adds progress bar
+    transition: fade
+    slide-number: true
+    margin: 0.075
+    logo: "logo.png" 
+    toc: false #toc table of content
+---
+
+# Some information about me
+- **Name**: Luca Yannik Kogelheide
+- **ORCID**: [https://orcid.org/0009-0000-6724-0779](https://orcid.org/0009-0000-6724-0779)
+
+## My Favorite Equation
+
+A completely overrated approach to statistics is based on this equation:
+
+$$
+P(A | B) = \frac{P(B | A) P(A)}{P(B)}
+$$
+
+
+## Did You Know?
+When I was about 10, I was a player escort for the captain of Borussia Mönchengladbach vs VFL Bochum (Bochum is the city I currently live in). 
