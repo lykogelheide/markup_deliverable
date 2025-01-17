@@ -1,0 +1,143 @@
+---
+title: "my_reproducible_simulation"
+author: 
+  - name: Luca Y. Kogelheide
+    orcid: 0009-0000-6724-0779
+    email: l.y.kogelheide@uu.nl
+    affiliations:
+      - name: Methodology & Statistics @ UU University (Student)
+date: 19 Nov 2024
+date-format: "D MMM YYYY"
+bibliography: Docs/references.bib
+format: pdf
+---
+
+# R Code
+### *Of a small simulation study that investigates the impact of measurement error in linear regression analysis.*
+
+
+### Load Libraries:
+```{r message=FALSE, warning=FALSE}
+# Package names
+packages <- c("Hmisc", "mice", "tidyverse")
+
+# Identify missing packages
+missing_packages <- setdiff(packages, rownames(installed.packages()))
+
+# Install only if there are missing packages
+if (length(missing_packages) > 0) {
+  options(repos = c(CRAN = "https://cran.r-project.org")) # Ensure CRAN mirror is set
+  install.packages(missing_packages)
+}
+
+# Load all packages
+invisible(lapply(packages, library, character.only = TRUE))
+```
+
+### Read in the data:
+```{r}
+d1 <- sasxport.get("Data/DEMO_I.XPT")
+d2 <- sasxport.get("Data/BPX_I.XPT")
+d3 <- sasxport.get("Data/BMX_I.XPT")
+d4 <- sasxport.get("Data/GHB_I.XPT")
+d5 <- sasxport.get("Data/TCHOL_I.XPT")
+
+###Select variables of interest
+d1.t <- subset(d1, select = c("seqn","riagendr","ridageyr"))
+d2.t <- subset(d2, select = c("seqn","bpxsy1"))
+d3.t <- subset(d3, select = c("seqn","bmxbmi"))
+d4.t <- subset(d4, select = c("seqn","lbxgh"))
+d5.t <- subset(d5, select = c("seqn","lbdtcsi"))
+
+###Merge data sets
+d <- merge(d1.t,d2.t)
+d <- merge(d,d3.t)
+d <- merge(d,d4.t)
+d <- merge(d,d5.t)
+```
+
+### Rename Variables:
+- RIAGENDR: Gender
+- RIDAGEYR: Age in years at screening
+- BPXSY1: Systolic: Blood pres (1st rdg) mm Hg
+- BMXBMI: Body Mass Index (kg/m**2)
+- LBDTCSI: Total Cholesterol (mmol/L)
+- LBXGH: Glycohemoglobin (%)
+```{r}
+d$age <- d$ridageyr
+d$sex <- d$riagendr
+d$bp <- d$bpxsy1
+d$bmi <- d$bmxbmi
+d$HbA1C <- d$lbxgh
+d$chol <- d$lbdtcsi
+d$age[d$age<18] <- NA
+```
+
+### Select Only Complete Cases:
+```{r}
+dc <- cc(subset(d,select=c("age","sex","bmi","HbA1C","bp")))
+```
+
+### Analysis:
+```{r}
+summary(lm(bp ~ HbA1C + age + as.factor(sex), data=dc))
+confint(lm(bp ~ HbA1C + age + as.factor(sex), data=dc))
+summary(lm(bp ~ HbA1C + bmi + age + as.factor(sex), data=dc))
+confint(lm(bp ~ HbA1C + bmi + age + as.factor(sex), data=dc))
+```
+
+
+### Simulation of Measurement Error:
+```{r}
+ref <- lm(bp ~ HbA1C + bmi + age + as.factor(sex), data=dc)$coef[2] 
+n.sim <- 1e3 
+perc.me.exp <- seq(0,.5,.1)
+perc.me.conf<- seq(0,.5,.1)
+scenarios <- expand.grid(perc.me.exp,perc.me.conf)
+var.exp <- var(dc$HbA1C)
+var.conf <- var(dc$bmi)
+n <- dim(dc)[1]
+beta.hat <- matrix(ncol=dim(scenarios)[1], nrow=n.sim)
+for (k in 1:n.sim){
+  print(k)
+  set.seed(k)
+  for (i in 1:dim(scenarios)[1]){
+    var.me.exp <- var.exp*scenarios[i,1]/(1-scenarios[i,1])
+    var.me.conf <- var.conf*scenarios[i,2]/(1-scenarios[i,2])
+    dc$HbA1C.me <- dc$HbA1C + rnorm(dim(dc)[1], 0, sqrt(var.me.exp) )
+    dc$bmi.me <- dc$bmi + rnorm(dim(dc)[1], 0, sqrt(var.me.conf) )
+    beta.hat[k,i] <- lm(bp ~ HbA1C.me + age + bmi.me + as.factor(sex),
+                        data=dc)$coef[2]
+  }}
+```
+
+### Create Figure with Results
+```{r}
+tot.mat <- cbind(100*scenarios,apply(beta.hat,2,mean))
+colnames(tot.mat) <- c("me.exp","me.conf","estimate")
+FIGURE <- ggplot(tot.mat, aes(me.exp, me.conf)) +
+  geom_tile(color="white",aes(fill = estimate)) +
+  geom_text(aes(label = round(estimate, 2))) +
+  scale_fill_gradient2(low="#D55E00",mid="white",high = "#56B4E9", midpoint=ref) +
+  labs(x=paste("% of total variance of HbA1c due to measurement error"),
+       y=paste("% of total variance of BMI due to measurement error")) +
+  coord_equal()+
+  scale_y_continuous(breaks=unique(tot.mat[,1]))+
+  scale_x_continuous(breaks=unique(tot.mat[,1]))+
+  theme(panel.background = element_rect(fill='white', colour='grey'),
+        plot.title=element_text(hjust=0),
+        axis.ticks=element_blank(),
+        axis.title=element_text(size=12),
+        axis.text=element_text(size=10),
+        legend.title=element_text(size=12),
+        legend.text=element_text(size=10))
+FIGURE
+```
+
+### Save Figure: 
+#### *Please note, this figure is already included in the folder called "Results". Therefore, this step is only needed when changes to the code were made.
+```{r}
+ggsave(filename = "Results/Figure_STRATOS.tif", plot = FIGURE, device = "tiff")
+```
+
+## End of R Code
